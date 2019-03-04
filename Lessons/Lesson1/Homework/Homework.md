@@ -11,10 +11,10 @@ To complete the task answer following questions save your changes and commit to 
    **Answer:** Forks používame aby sme nakopírovali dáta od iného užívateľa do svojho konta. 
 
 4. **Question:** What command is used for sending selected changes to local repository?  
-   **Answer:** ...
+   **Answer:** git, commit
 
 5. **Question:** What command is used for publishing changes for others?  
    **Answer:** Push, commit
 
 6. **Question:** How can you compare forks and apply changes to other's fork?  
-   **Answer:** ...
+   **Answer:** git, pull, request
