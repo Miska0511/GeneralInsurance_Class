@@ -3,21 +3,27 @@
 # __Commit__ it to your repository into `Lessons/Lesson2/Homework`.
 
 ## Code
-library(dplyr)
-library(ggplot2)
-
-dt_KPI_raw <- read.csv("data/lesson2_KPI.csv")
+dt_KPI_raw <- read.csv("lesson2_KPI.csv")
 
 dt_KPI_raw %>% 
   mutate(Premium = ifelse(Premium < 0, 0, Premium))
 
-dt_KPI_raw %>%  mutate(UWR = Premium - Expenses - Losses) %>% 
+dt_KPI_raw %>%  
+  mutate(UWR = Premium - Expenses - Losses) %>% 
+  group_by(Unit) %>% 
+  summarize(UWR = sum(UWR, na.rm = TRUE)) %>% 
+  arrange(UWR)
+
+dt_KPI_raw %>%  
+  mutate(UWR = Premium - Expenses - Losses) %>% 
+  filter(Unit == "Unit7") %>% 
   group_by(Year) %>% 
   summarize(UWR = sum(UWR, na.rm = TRUE)) %>% 
   arrange(UWR)
 
 dt_KPI_raw %>% 
   mutate(UWR = Premium - Expenses - Losses) %>% 
+  filter(Unit == "Unit7") %>% 
   group_by(Year) %>% 
   summarize(UWR = sum(UWR, na.rm = TRUE)) %>% 
   ggplot(aes(x = reorder(Year, UWR), y = UWR)) + 
@@ -27,7 +33,7 @@ dt_KPI_raw %>%
 
 
 # Your Explanation about analysis:
-# Ocistenie dat
-# Zoskupenie podla rokov
-# Porovnanie podla Underwriting Results
-# Na zaklade analyzy vysiel najhorsi rok rok 2015, co je sposobene najmensou hodnotou UWR. 
+# Ocistenie dat od zaporneho poistneho, vyhladanie portfolia s najvyssou hodnotou Underwriting Result, teda najprofitabilnejsie
+# Vyfiltrovanie Underwriting Result pre Unit7 a zoskupenie podla rokov
+# Porovnanie podla Underwriting Results a graficke znazornenie
+# Na zaklade analyzy vysiel najhorsi rok rok 2014, co je sposobene najmensou hodnotou Underwriting Result. 
