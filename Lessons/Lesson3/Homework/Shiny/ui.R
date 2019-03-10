@@ -1,9 +1,6 @@
 
-
-library(shiny)
-library(ggplot2)
-
 fluidPage(
+  titlePanel("Scatter Plot with colour"),
   sidebarPanel(
     selectInput("colour","Colouring Var", choices=c("Segment","Unit","Region","Business","Year"))
     ),
