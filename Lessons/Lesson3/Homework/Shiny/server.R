@@ -1,5 +1,6 @@
 library(shiny)
 library(ggplot2)
+library(dplyr)
 
 dt_KPI <- lesson2_KPI
 dt_KPI <- dt_KPI%>% filter(!is.na(Business))
