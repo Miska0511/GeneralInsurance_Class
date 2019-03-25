@@ -1,0 +1,76 @@
+library(dplyr)
+library(lubridate)
+
+dt_Policy <- lesson5_PolicyHistory %>% distinct(NrPolicy, NrObject, .keep_all = TRUE) 
+dt_Claims <- lesson5_Claims %>% distinct(NrClaim, .keep_all = TRUE)
+
+dt_pol_w_claims <- left_join(dt_Policy, 
+                             dt_Claims, 
+                             by = c("NrPolicy", "NrObject")
+)
+
+dt_pol_w_claims <- dt_pol_w_claims %>% 
+  mutate(Time_Exposure = lubridate::dmy(Dt_Exp_End) - lubridate::dmy(Dt_Exp_Start),
+         Ult_Loss = Paid + Reserves,
+         Burning_Cost = ifelse(is.na(Ult_Loss), 0,  Ult_Loss / as.integer(Time_Exposure)))
+
+# skumame premennu Veh_brand, ktora ma potencialy vplyv, lebo niektore znacky vozidial sa mozu javit ako viac kazive 
+
+library(ggplot2)
+dt_pol_w_claims %>% 
+  ggplot(aes(y = Burning_Cost, x = VEH_brand)) + 
+  geom_jitter()
+# mame viac ako 130 brands, z grafu je velmi tazko urcit, ktora znacka je "najkazivejsia", je velmi neprehladny
+
+# pozrieme sa na to cez hodnoty
+dt_pol_w_claims %>% 
+  group_by(VEH_brand) %>% 
+  summarise(BC_avg = mean(Burning_Cost, na.rm  = TRUE),
+            BC_median = median(Burning_Cost, na.rm = TRUE),
+            cnt = n()) %>% 
+  arrange(desc(BC_avg))
+
+# najvyssiu priemer hodnotu Burning_Cost (62.5) majú vozidla znacky "021", ale tento vysledok je skresleny tym, ze mame iba jedno vozidlo tejto znacky 
+# zaroven maju aj najvyssi median pre Burning_Cost
+# znacka "950" ma pri 99 vozidlach priemernu hodnotu Burning_Cost 11.0, co je z pohladu relevelntnosti poctu dat, najvyssia hodnota  
+
+dt_pol_w_claims %>% 
+  ggplot(aes(y = Burning_Cost, x = VEH_brand)) + 
+  geom_boxplot() +
+  ylim(0, 100)
+
+
+# teraz budeme skumat premennu D_age, lebo predpokladame ze vek poistenca ma vlyv na jeho skusenosti, rekacny cas...
+
+dt_pol_w_claims %>% 
+  ggplot(aes(y = Burning_Cost, x = D_age)) + 
+  geom_jitter()+ylim(0,100)
+# na zaklade grafu to vyzera tak, ze najvacsie hodnoty Burning_Cost su u poistencov vo veku 43-46 rokov 
+# pozrime sa na hodnoty
+
+dt_pol_w_claims %>% 
+  filter(Burning_Cost != 0) %>% 
+  group_by(D_age) %>% 
+  summarise(BC_avg = mean(Burning_Cost, na.rm  = TRUE),
+            BC_median = median(Burning_Cost, na.rm = TRUE),
+            cnt = n()) %>% 
+  arrange(desc(BC_avg))
+
+# najvssi priemer pre Burning_Cost maju poistenci vo veku 60 rokov
+# najvyssi median pre Burning_Cost maju poistenci vo veku 69 rokov 
+# z grafu sme predpokladali ze najrizikovejsi su poistenci vo veku 43-46 rokov, co nekoresponeduje s najvyssou hodnotou medianu pre 60 rocnych, dovod moze byt, ze vo veku 43-46 rokov mame viac dat, to znamena ze aj viac nizkych hodnot, co znizuje hodnotu medianu
+
+dt_pol_w_claims %>% 
+  ggplot(aes(y = Burning_Cost, x = D_age)) + 
+  geom_boxplot() 
+# na grafe vidime, ze pri niektorych rocnikoch je vela outliererov, ktori mozu kazit predikciu
+
+# GLM model
+model <- glm(data = dt_pol_w_claims %>% filter(Burning_Cost != 0, Burning_Cost < 100),
+                formula = Burning_Cost ~ D_age + VEH_brand,
+                family = Gamma())
+summary(model)
+
+# premenne VEH_brands a D_age su statisticky vyznamne, teda nas model je prediktivny
+# pre vytvorenie lepsieho modelu, by bolo dobre zahrnut viacero faktorov, ako rok vyroby vozidla, typ zakaznika, alebo ine, ktore mozu maju taktiez vynamny vplyv
+# rovnako by sme mohli vyskasat aj ine modely a na základe AIC alebo BIC kriteria by sme zvolili ten najlepsi
